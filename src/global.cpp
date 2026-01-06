@@ -1,2 +1,2 @@
 #include "../include/global.h"
-bool isdisplayActive = false;
+bool isdisplayActive = true;

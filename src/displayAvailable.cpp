@@ -1,13 +1,9 @@
 #include <iomanip>
 #include "..\include\displayAvailable.h"
-#include<portaudio.h>
-#include<iostream>
+#include <portaudio.h>
+#include <iostream>
 
 using namespace std;
-
-
-
-
 
 void printAvailableDevices()
 {
