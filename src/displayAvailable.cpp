@@ -3,6 +3,8 @@
 #include<portaudio.h>
 #include<iostream>
 
+using namespace std;
+
 
 
 
@@ -44,6 +46,5 @@ void printAvailableDevices()
              << setw(12) << deviceInfo->defaultSampleRate
              << endl;
     }
-
     cout << "=========================================================\n";
 }
