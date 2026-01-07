@@ -5,21 +5,19 @@
 
 // Global Parameters
 // Stream 1 Parameter
-#define Mic1Index       22
-#define mic1Channel     1
-#define Out1Index       21
-#define out1Channel     1
-#define sampleRate1     8000
-
-// Stream 2 Parameter
-#define Mic2Index       8
-#define mic2Channel     2
-#define Out2Index       12
-#define out2Channel     2
-#define sampleRate2     44100
+#define Mic1Index       20
+#define mic1Channel     2
+#define Out1Index       17
+#define out1Channel     2
+#define sampleRate1     48000
+//Stream 2 Parameter
+#define Mic2Index       21
+#define mic2Channel     1
+#define Out2Index       16
+#define out2Channel     1
+#define sampleRate2     16000
 
 #define framePerBuffer 528
-
 
 extern bool isdisplayActive;
 
@@ -33,14 +31,18 @@ struct CoreParameters
     int channelCount;
 };
 
+struct sharedSpace{
+    static float* sampleVal;
+};
+
 struct userData1
 {
     CoreParameters cp;
+    
+    
 };
-
 struct userData2
 {
-    CoreParameters cp;
-};
+    CoreParameters cp;};
 
 #endif
