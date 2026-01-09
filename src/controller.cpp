@@ -15,13 +15,13 @@ void controller(userData1 &uData1, userData2 &uData2)
         {
         case '1':
             uData1.cp.isStreamActive.store(!uData1.cp.isStreamActive.load());
-            uData2.cp.isStreamActive.store(false);
+            
             cout << "Stream 1: " << uData1.cp.isStreamActive.load() << endl;
             cout << "Stream 2: " << uData2.cp.isStreamActive.load() << endl;
             break;
         case '2':
             uData2.cp.isStreamActive.store(!uData2.cp.isStreamActive.load());
-            uData1.cp.isStreamActive.store(false);
+           
             cout << "Stream 1: " << uData1.cp.isStreamActive.load() << endl;
             cout << "Stream 2: " << uData2.cp.isStreamActive.load() << endl;
             break;

@@ -78,7 +78,7 @@ static int stream2CallBack(
     }
 
     for (unsigned long i = 0; i < framesPerBuffer; i++)
-        out[i] = in ? in[i] * 0.8f : 0.0f;
+        out[i] = sharedSpace::sampleVal[2*i];
 
     return paContinue;
 }
