@@ -7,11 +7,15 @@
 #include "../include/displayAvailable.h"
 #include "../include/controller.h"
 #include "../include/lowPass.h"
+#include "../include/pa_ringbuffer.h"
 
 using namespace std;
 
-// Helper
+// ----- ADD THIS -----
+// Global instance of sharedSpace
+sharedSpace sharedMem;
 
+// Helper
 static void checkError(PaError err)
 {
     if (err != paNoError)
@@ -44,13 +48,12 @@ static int stream1CallBack(
 
     if (!uData->cp.isStreamActive.load())
     {
-        
-            return paContinue;
+        return paContinue;
     }
 
     for (unsigned long i = 0; i < framesPerBuffer; i++)
     {
-        float xL = in ? in[2 *i] : 0.0f;
+        float xL = in ? in[2 * i] : 0.0f;
         float filteredImpulseL = 0.0f;
         for (int k = filterlength - 1; k > 0; k--)
         {
@@ -66,18 +69,18 @@ static int stream1CallBack(
 
     for (int m = 0; m < ResampledFrameSize; m++)
     {
-        // linearInterpolation
         int integer = m * 2.7625;
         float fraction = float(m * 2.7625) - float(integer);
-        sharedSpace::sampleVal[m] = (1 - fraction) * filteredInput[integer] + fraction * filteredInput[integer + 1];
+        float val = (1 - fraction) * filteredInput[integer] + fraction * filteredInput[integer + 1];
+        // write to ring buffer
+        PaUtil_WriteRingBuffer(&sharedMem.ringBuffer, &val, 1);
     }
 
-    return paContinue; 
+    return paContinue;
 }
 
 // Stream 2 callback: JBL Hands-Free mic -> JBL Hands-Free speaker
 // Mic: mono (1 ch), Output: mono (1 ch)
-
 static int stream2CallBack(
     const void *inputBuffer,
     void *outputBuffer,
@@ -92,12 +95,13 @@ static int stream2CallBack(
 
     if (!uData->cp.isStreamActive.load())
     {
-        for (unsigned long i = 0; i < framePerBuffer; i++)
+        for (unsigned long i = 0; i < framesPerBuffer; i++)
         {
-
-            out[i] = CoreParameters::gain.load() *   sharedSpace::sampleVal[i];
+            float val = 0.0f;
+            if (PaUtil_ReadRingBuffer(&sharedMem.ringBuffer, &val, 1) == 0)
+                val = 0.0f; // buffer empty, output silence
+            out[i] = CoreParameters::gain.load() * val;
         }
-        
     }
     else
     {
@@ -105,7 +109,7 @@ static int stream2CallBack(
         for (unsigned long i = 0; i < framesPerBuffer; i++)
         {
 
-            out[i] =CoreParameters::gain.load() *  in[i];
+            out[i] = CoreParameters::gain.load() * in[i];
         }
     }
 
@@ -113,12 +117,18 @@ static int stream2CallBack(
 }
 
 // Main
-
 int main()
 {
     cout << "---- START ----" << endl;
 
     checkError(Pa_Initialize());
+
+    // ----- FIXED RING BUFFER INITIALIZATION -----
+    if (PaUtil_InitializeRingBuffer(&sharedMem.ringBuffer, sizeof(float), 1024, sharedMem.ringBufferStorage) < 0)
+    {
+        cout << "Failed to initialize ring buffer!" << endl;
+        return -1;
+    }
 
     if (isdisplayActive)
     {
@@ -139,9 +149,7 @@ int main()
     userData2 userD2;
     userD1.cp.isStreamActive.store(true);
 
-
     userD2.cp.isStreamActive.store(true);
-    
 
     computelpfImpuseResponse();
     cout << "Impulse Response" << endl;
@@ -150,8 +158,8 @@ int main()
         cout << k << " : " << lpfParamters::ha[k] << endl;
     }
     thread controlT(controller, ref(userD1), ref(userD2));
-    // Stream parameters
 
+    // Stream parameters
     PaStreamParameters mic1{}, out1{}, mic2{}, out2{};
 
     // ---- Stream 1 (Laptop) ----
@@ -178,12 +186,10 @@ int main()
         Pa_GetDeviceInfo(out2.device)->defaultLowOutputLatency;
 
     // Format support checks (MANDATORY)
-
     checkError(Pa_IsFormatSupported(&mic1, &out1, sampleRate1));
     checkError(Pa_IsFormatSupported(&mic2, &out2, sampleRate2));
 
     // Open streams
-
     PaStream *stream1 = nullptr;
     PaStream *stream2 = nullptr;
 

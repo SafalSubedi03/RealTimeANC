@@ -2,6 +2,7 @@
 #define GLOBAL_H
 
 #include <atomic>
+#include "pa_ringbuffer.h"
 
 // Global Parameters
 // Stream 1 Parameter
@@ -28,13 +29,14 @@ struct CoreParameters
 {
     std::atomic<bool> isStreamActive;
     static std::atomic<float> gain;
-    
 };
 
 struct sharedSpace
 {
-    static std::atomic<bool> writeComplete;
-    static std::atomic<bool> readComplete;
+    // inside sharedSpace
+    PaUtilRingBuffer ringBuffer;
+    float ringBufferStorage[1024]; // size big enough to hold multiple frames
+
     static float sampleVal[ResampledFrameSize];
 };
 
@@ -48,7 +50,6 @@ struct userData1
 
 {
     CoreParameters cp;
-    
 };
 struct userData2
 {
