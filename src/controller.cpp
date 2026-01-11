@@ -27,66 +27,20 @@ void controller(userData1 &uData1, userData2 &uData2)
             break;
 
         case 'q':
-            if (uData1.cp.isStreamActive.load())
-            {
-                newGain = uData1.cp.gainL.load() + changeGainBy;
-                uData1.cp.gainL.store(newGain);
-                cout << "GainL: " << newGain << endl;
-            }
-            else if (uData2.cp.isStreamActive.load())
-            {
-                newGain = uData2.cp.gainL.load() + changeGainBy;
-                uData2.cp.gainL.store(newGain);
-                cout << "GainL: " << newGain << endl;
-            }
+            newGain = CoreParameters::gain.load()  + changeGainBy;
+            CoreParameters::gain.store(newGain);
+            cout<<"Gain: "<<CoreParameters::gain.load()<<endl;
+            keypressed = '*';
             break;
-        case 'w':
-            if (uData1.cp.isStreamActive.load())
-            {
-                newGain = uData1.cp.gainR.load() + changeGainBy;
-                uData1.cp.gainR.store(newGain);
-                cout << "GainR: " << newGain << endl;
-            }
-            else if (uData2.cp.isStreamActive.load())
-            {
-                newGain = uData2.cp.gainR.load() + changeGainBy;
-                uData2.cp.gainR.store(newGain);
-                cout << "GainR: " << newGain << endl;
-            }
-            break;
+       
         case 'a':
-            if (uData1.cp.isStreamActive.load())
-            {
-                newGain = uData1.cp.gainL.load() - changeGainBy;
-                if (newGain > 0)
-                    uData1.cp.gainL.store(newGain);
-
-                cout << "GainL: " << uData1.cp.gainL.load() << endl;
-            }
-            else if (uData2.cp.isStreamActive.load())
-            {
-                newGain = uData2.cp.gainL.load() - changeGainBy;
-                if (newGain > 0)
-                    uData2.cp.gainL.store(newGain);
-                cout << "GainL: " << uData2.cp.gainL.load() << endl;
-            }
+            newGain = CoreParameters::gain.load()  - changeGainBy;
+            if(newGain > 0)
+            CoreParameters::gain.store(newGain);
+            cout<<"Gain: "<<CoreParameters::gain.load()<<endl;
+            keypressed = '*';
             break;
-        case 's':
-            if (uData1.cp.isStreamActive.load())
-            {
-                newGain = uData1.cp.gainR.load() - changeGainBy;
-                if (newGain > 0)
-                    uData1.cp.gainR.store(newGain);
-                cout << "GainR: " << uData1.cp.gainR.load() << endl;
-            }
-            else if (uData2.cp.isStreamActive.load())
-            {
-                newGain = uData2.cp.gainR.load() - changeGainBy;
-                if (newGain > 0)
-                    uData2.cp.gainR.store(newGain);
-                cout << "GainR: " << uData2.cp.gainR.load() << endl;
-            }
-            break;
+        
         default:
             keypressed = '*';
             break;

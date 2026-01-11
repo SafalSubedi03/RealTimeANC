@@ -19,7 +19,7 @@ void computelpfImpuseResponse()
 
     computelphamming();        
 
-        float fc = 8000; //in hz
+        float fc = 7500; //in hz
         float wc = 2.0f * pi * fc / sampleRate1;
 
         for (int n = 0; n < M; n++)

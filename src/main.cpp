@@ -35,39 +35,44 @@ static int stream1CallBack(
     void *u)
 {
     const float *in = (const float *)inputBuffer; // mono
-        // stereo
+                                                  // stereo
+
     userData1 *uData = (userData1 *)u;
-    
-    static float delayL[filterlength] {};
-    static float filteredInput[framePerBuffer] {};
-    
+
+    static float delayL[filterlength]{};
+    static float filteredInput[framePerBuffer]{};
 
     if (!uData->cp.isStreamActive.load())
     {
-        for (unsigned long i = 0; i < framesPerBuffer; i++)
-           return paContinue;
+        
+            return paContinue;
     }
 
     for (unsigned long i = 0; i < framesPerBuffer; i++)
-    {        
-        float xL = in ? in[2*i] : 0.0f;     
+    {
+        float xL = in ? in[2 *i] : 0.0f;
         float filteredImpulseL = 0.0f;
-        for(int k = filterlength-1;k>0;k--){
-            delayL[k] = delayL[k-1];
+        for (int k = filterlength - 1; k > 0; k--)
+        {
+            delayL[k] = delayL[k - 1];
         }
         delayL[0] = xL;
-        for(int k = 0; k < filterlength; k++){            
+        for (int k = 0; k < filterlength; k++)
+        {
             filteredImpulseL += lpfParamters::ha[k] * delayL[k];
-        }       
-        filteredInput[i]  =    filteredImpulseL;  // Left
+        }
+        filteredInput[i] = filteredImpulseL; // Left
     }
-    for(int m = 0; m < ResampledFrameSize; m++){
-        //linearInterpolation
-        int integer = m*2.7625;
-        float fraction = float(m*2.7625) - float(integer);
-        sharedSpace::sampleVal[m] = (1-fraction) * filteredInput[integer] + fraction * filteredInput[integer+1];
+
+    for (int m = 0; m < ResampledFrameSize; m++)
+    {
+        // linearInterpolation
+        int integer = m * 2.7625;
+        float fraction = float(m * 2.7625) - float(integer);
+        sharedSpace::sampleVal[m] = (1 - fraction) * filteredInput[integer] + fraction * filteredInput[integer + 1];
     }
-    return paContinue;
+
+    return paContinue; 
 }
 
 // Stream 2 callback: JBL Hands-Free mic -> JBL Hands-Free speaker
@@ -89,13 +94,20 @@ static int stream2CallBack(
     {
         for (unsigned long i = 0; i < framePerBuffer; i++)
         {
-            out[i] = 0.0f;                 
-        }
-        return paContinue;
-    }
 
-    for (unsigned long i = 0; i < framesPerBuffer; i++)
-        out[i] = sharedSpace::sampleVal[i];
+            out[i] = CoreParameters::gain.load() *   sharedSpace::sampleVal[i];
+        }
+        
+    }
+    else
+    {
+
+        for (unsigned long i = 0; i < framesPerBuffer; i++)
+        {
+
+            out[i] =CoreParameters::gain.load() *  in[i];
+        }
+    }
 
     return paContinue;
 }
@@ -107,7 +119,6 @@ int main()
     cout << "---- START ----" << endl;
 
     checkError(Pa_Initialize());
-
 
     if (isdisplayActive)
     {
@@ -127,15 +138,16 @@ int main()
     userData1 userD1;
     userData2 userD2;
     userD1.cp.isStreamActive.store(true);
-    userD1.cp.gainL.store(10);
+
 
     userD2.cp.isStreamActive.store(true);
-    userD2.cp.gainR.store(10);
+    
 
     computelpfImpuseResponse();
-    cout<<"Impulse Response"<<endl;
-    for(int k = 0; k<filterlength;k++){
-        cout<< k <<" : "<<lpfParamters::ha[k]<<endl;
+    cout << "Impulse Response" << endl;
+    for (int k = 0; k < filterlength; k++)
+    {
+        cout << k << " : " << lpfParamters::ha[k] << endl;
     }
     thread controlT(controller, ref(userD1), ref(userD2));
     // Stream parameters
@@ -213,6 +225,5 @@ int main()
 
     cout << "---- END ----" << endl;
 
-    delete[] sharedSpace::sampleVal;
     return 0;
 }
